@@ -1,0 +1,38 @@
+pipeline{
+    agent any
+    environment{
+        SONAR_HOME = tool "sonar"
+    }
+    stages{
+        stage("clone code"){
+            steps{
+                git url: "https://github.com/dhrumilparmar/jenkins-ci-cd.git", branch: "main"
+            }
+        }
+        stage("sonarqube quality analysis"){
+            steps{
+                withSonarQubeEnv("sonar"){
+                    sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=ecomerce -Dsonar.projectKey=ecommerce"
+                }
+            }
+        }
+        stage("OWASP Dependency check"){
+            steps{
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'owasp'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        
+        stage("trivy file system scan") {
+            steps {
+                // If you want HTML report
+                sh 'trivy fs --format table -o trivy-fs-report.xml .'
+            }
+        }
+        stage("deploy using docker compose") {
+            steps {
+                sh "docker-compose up -d"
+            }
+        }
+    }
+}
