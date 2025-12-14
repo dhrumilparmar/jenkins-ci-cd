@@ -10,6 +10,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend:/app
+      - /app/node_modules
+
   frontend:
     build: ./frontend
     container_name: mern-frontend
